@@ -6,7 +6,7 @@ window.onload = function() {
   $.getJSON('geo_data.json', function(data) {
     var geojson = L.geoJson(data, {
       onEachFeature: function(feature, layer) {
-        layer.bindPopup(feature.properties.Area_Name);
+        layer.bindPopup(feature.properties.text);
       }
     });
 

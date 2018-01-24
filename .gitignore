@@ -12,3 +12,5 @@ pyvenv.cfg
 .venv
 pip-selfcheck.json
 api_keys.py
+*.json
+geocode_tweets.py
