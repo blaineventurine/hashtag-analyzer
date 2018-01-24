@@ -8,22 +8,33 @@ from geopy.geocoders import Nominatim
 import tweepy
 from api_keys import *
 
-auth = tweepy.OAuthHandler(key, secret_key)
-auth.set_access_token(token, secret_token)
-api = tweepy.API(auth)
+class Scrape():
+  def __init__(self, num_of_tweets, keyword_list):
+    self.auth = tweepy.OAuthHandler(key, secret_key)
+    self.auth.set_access_token(token, secret_token)
+    self.api = tweepy.API(self.auth)
+    self.num_of_tweets = num_of_tweets
+    self.keyword_list = keyword_list
 
-keyword_list = ['trump', 'maga']
-data_list = []
-count = 0
+  def get_data(self):
+    stream = tweepy.Stream(self.auth, Listener(num_of_tweets=self.num_of_tweets))
+    try:
+      stream.filter(track=self.keyword_list, languages=['en'])
+    except Exception as e:
+      print(e.__doc__)
+
+  def geocode_data(self):
+    geocode = Geocoder()
+    geocode.make_geojson()
 
 class Listener(tweepy.StreamListener):
 
-  def __init__(self):
+  def __init__(self, num_of_tweets):
     self.counter = 0
+    self.num_of_tweets = num_of_tweets
 
   def on_data(self, data):
-    #global count
-    if self.counter < 10:
+    if self.counter < self.num_of_tweets:
       json_data = json.loads(data)
       try:
         location = json_data['user']['location']
@@ -79,7 +90,10 @@ class Geocoder():
     with open('geo_data.json', 'w') as fout:
       fout.write(json.dumps(geo_data, indent=4, ensure_ascii=False))
 
-stream = tweepy.Stream(auth, Listener())
-geocode = Geocoder()
-stream.filter(track=keyword_list, languages=['en'])
-geocode.make_geojson()
+
+if __name__ == "__main__":
+  num_of_tweets = 10
+  keyword_list = ['trump', 'maga']
+  scrape = Scrape(num_of_tweets, keyword_list)
+  scrape.get_data()
+  scrape.geocode_data()
