@@ -3,7 +3,7 @@ window.onload = function() {
     attribution:
       '&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
   });
-  $.getJSON('geo_data.json', function(data) {
+  $.getJSON('../output/geo_data.json', function(data) {
     var geojson = L.geoJson(data, {
       onEachFeature: function(feature, layer) {
         layer.bindPopup(feature.properties.text);
