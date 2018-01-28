@@ -4,11 +4,11 @@
 import csv
 import json
 import re
-
 import tweepy
 from geopy.geocoders import Nominatim
-
+from textblob import TextBlob
 import api_keys
+import sentiment_mod as sentiment_mod
 
 class Scrape():
   '''
@@ -33,8 +33,9 @@ class Scrape():
 
   @classmethod
   def geocode_data(cls):
-    geocode = Geocoder()
-    geocode.make_geojson()
+    encode = TextEncoder()
+    encode.make_geojson()
+    #encode.do_blob()
 
 class Listener(tweepy.StreamListener):
 
@@ -57,6 +58,7 @@ class Listener(tweepy.StreamListener):
         text = json_data['retweeted_status']['extended_tweet']['full_text']
         user = json_data['user']['name']
         necessary_tweet_data = [[location], [user], [text]]
+
         if location is not None:
           # only get locations ending with a comma and a space followed by two letters
           # filters out most locations not listed as "City, ST" so less queries are made
@@ -68,8 +70,7 @@ class Listener(tweepy.StreamListener):
               writer = csv.writer(tweet_file, quoting=csv.QUOTE_MINIMAL)
               writer.writerows([necessary_tweet_data])
               self.counter += 1
-            return
-          return
+            return True
       except KeyError:
         print("fail")
     else:
@@ -79,20 +80,32 @@ class Listener(tweepy.StreamListener):
     print(status)
     return True
 
-class Geocoder():
-  '''
-    Class for turning tweet data into mappable data
-    '''
-  @classmethod
-  def make_geojson(cls):
+class TextEncoder():
+  '''Class for turning tweet data into mappable data'''
+  tweet_file = 'output/tweets.csv'
+  geo_json_file = 'output/geo_data.json'
+
+
+  def clean_text(self, string):
+    ''' Returns the string without non-ASCII characters'''
+
+    # strip out URLs
+    string = re.sub(
+        r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+',
+        '',
+        string)
+    string = string.replace('[\'', '').replace('\']', '').replace('\\n', ' ').replace('[', '').replace('\\', '').replace(']', '')
+    stripped = (c for c in string if 0 < ord(c) < 127)
+    return ''.join(stripped)
+
+  def make_geojson(self):
     '''
       Extracts tweet data from CSV and renders it into GeoJSON
       Uses OpenStreetMap API to guess coordinates from place names
       '''
     geolocator = Nominatim()
-    tweet_file = 'output/tweets.csv'
-    geo_json_file = 'output/geo_data.json'
-    with open(tweet_file, 'r') as csvfile:
+
+    with open(self.tweet_file, 'r') as csvfile:
       reader = csv.reader(csvfile)
       geo_data = {
           "type": "FeatureCollection",
@@ -103,6 +116,13 @@ class Geocoder():
         user = line[1]
         text = line[2]
         if loc is not None and loc.latitude is not None and loc.longitude is not None:
+            # if re.match(r'^RT.*', text):
+            #   continue
+          text = self.clean_text(text)
+          user = self.clean_text(user)
+
+          sentiment_value, confidence = sentiment_mod.sentiment(text)
+
           print(loc.latitude, loc.longitude)
           geo_json_feature = {
               "type": "Feature",
@@ -112,11 +132,13 @@ class Geocoder():
               },
               "properties": {
                   "text": text,
-                  "user": user
+                  "user": user,
+                  "sentiment_value": sentiment_value,
+                  "confidence": confidence
               }
           }
           geo_data['features'].append(geo_json_feature)
-    with open(geo_json_file, 'w') as fout:
+    with open(self.geo_json_file, 'w') as fout:
       fout.write(json.dumps(geo_data, indent=4, ensure_ascii=False))
 
 
