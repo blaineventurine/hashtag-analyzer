@@ -6,7 +6,7 @@ import json
 import re
 import tweepy
 from geopy.geocoders import Nominatim
-from textblob import TextBlob
+#from textblob import TextBlob
 import api_keys
 import sentiment_mod as sentiment_mod
 
@@ -35,7 +35,6 @@ class Scrape():
   def geocode_data(cls):
     encode = TextEncoder()
     encode.make_geojson()
-    #encode.do_blob()
 
 class Listener(tweepy.StreamListener):
 

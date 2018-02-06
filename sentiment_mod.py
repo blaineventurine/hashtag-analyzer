@@ -39,14 +39,14 @@ def find_features(document):
     features[w] = (w in words)
   return features
 
-with open("pickles/documents.pickle", "rb") as documents_f:
-  documents = pickle.load(documents_f)
+# with open("pickles/documents.pickle", "rb") as documents_f:
+#   documents = pickle.load(documents_f)
 
 with open("pickles/word_features5k.pickle", "rb") as word_features5k_f:
   word_features = pickle.load(word_features5k_f)
 
-with open("pickles/featuresets.pickle", "rb") as featuresets_f:
-  featuresets = pickle.load(featuresets_f)
+# with open("pickles/featuresets.pickle", "rb") as featuresets_f:
+#   featuresets = pickle.load(featuresets_f)
 
 with open("pickles/originalnaivebayes5k.pickle", "rb") as open_file:
   classifier = pickle.load(open_file)
